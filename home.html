@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HematoVision - Blood Cell Learning Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .disclaimer {
+            background: #ff9800;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            padding: 15px 30px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.3rem;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .preview-container {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .preview-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .cell-type-selector {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .cell-type-selector h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .cell-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .cell-type-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .cell-type-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .cell-type-card.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .cell-type-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .cell-type-desc {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .error-message {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success-message {
+            background: #51cf66;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .learning-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .cell-info-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .cell-info-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .cell-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .cell-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .cell-percentage {
+            text-align: center;
+            color: #666;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .cell-features {
+            list-style: none;
+            padding: 0;
+        }
+
+        .cell-features li {
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .cell-features li:before {
+            content: "•";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-card {
+                padding: 20px;
+            }
+            
+            .mode-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 HematoVision</h1>
+            <p>Interactive Blood Cell Learning Tool</p>
+        </div>
+
+        <div class="disclaimer">
+            ⚠️ Educational Tool Only - Not for Medical Diagnosis. Always consult healthcare professionals for medical advice.
+        </div>
+
+        <div class="main-card">
+            <div class="mode-selector">
+                <button class="mode-btn active" id="learnMode">📚 Learn Mode</button>
+                <button class="mode-btn" id="identifyMode">🔍 Identify Mode</button>
+            </div>
+
+            <div id="learnSection">
+                <div class="upload-section">
+                    <h2 style="margin-bottom: 30px; color: #333;">Upload a Blood Cell Image to Learn</h2>
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">Drop your blood cell image here</div>
+                        <div class="upload-subtext">We'll show you information about all cell types</div>
+                        <input type="file" id="fileInput" class="file-input" accept="image/*">
+                    </div>
+
+                    <div class="error-message" id="errorMessage"></div>
+                    <div class="success-message" id="successMessage"></div>
+
+                    <div class="preview-container" id="previewContainer">
+                        <img id="previewImage" class="preview-image" alt="Preview">
+                        <div class="cell-type-selector" id="cellTypeSelector">
+                            <h3>What type of blood cell do you think this is?</h3>
+                            <div class="cell-types">
+                                <div class="cell-type-card" data-type="eosinophil">
+                                    <div class="cell-type-name">🔴 Eosinophil</div>
+                                    <div class="cell-type-desc">Bright red granules, bilobed nucleus</div>
+                                </div>
+                                <div class="cell-type-card" data-type="lymphocyte">
+                                    <div class="cell-type-name">🔵 Lymphocyte</div>
+                                    <div class="cell-type-desc">Large nucleus, thin cytoplasm rim</div>
+                                </div>
+                                <div class="cell-type-card" data-type="monocyte">
+                                    <div class="cell-type-name">🟢 Monocyte</div>
+                                    <div class="cell-type-desc">Kidney-shaped nucleus, abundant cytoplasm</div>
+                                </div>
+                                <div class="cell-type-card" data-type="neutrophil">
+                                    <div class="cell-type-name">🟣 Neutrophil</div>
+                                    <div class="cell-type-desc">Multi-lobed nucleus, pink granules</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn" id="learnBtn">📚 Learn About All Types</button>
+                            <button class="btn btn-secondary" id="resetBtn">🔄 Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="learning-section">
+            <div class="cell-info-card">
+                <div class="cell-icon">🔴</div>
+                <div class="cell-title">Eosinophil</div>
+                <div class="cell-percentage">1-4% of white blood cells</div>
+                <ul class="cell-features">
+                    <li>Bilobed nucleus with dense chromatin</li>
+                    <li>Large, bright orange-red granules</li>
+                    <li>Diameter: 12-17 micrometers</li>
+                    <li>Role: Allergic reactions, parasites</li>
+                    <li>Increased in: Allergies, asthma</li>
+                </ul>
+            </div>
+
+            <div class="cell-info-card">
+                <div class="cell-icon">🔵</div>
+                <div class="cell-title">Lymphocyte</div>
+                <div class="cell-percentage">20-40% of white blood cells</div>
+                <ul class="cell-features">
+                    <li>Large, round nucleus</li>
+                    <li>Thin rim of basophilic cytoplasm</li>
+                    <li>Diameter: 6-15 micrometers</li>
+                    <li>Role: Adaptive immunity</li>
+                    <li>Types: T cells, B cells, NK cells</li>
+                </ul>
+            </div>
+
+            <div class="cell-info-card">
+                <div class="cell-icon">🟢</div>
+                <div class="cell-title">Monocyte</div>
+                <div class="cell-percentage">2-8% of white blood cells</div>
+                <ul class="cell-features">
+                    <li>Large, kidney-shaped nucleus</li>
+                    <li>Abundant gray-blue cytoplasm</li>
+                    <li>Diameter: 15-30 micrometers (largest)</li>
+                    <li>Role: Phagocytosis, tissue repair</li>
+                    <li>Become: Macrophages, dendritic cells</li>
+                </ul>
+            </div>
+
+            <div class="cell-info-card">
+                <div class="cell-icon">🟣</div>
+                <div class="cell-title">Neutrophil</div>
+                <div class="cell-percentage">50-70% of white blood cells</div>
+                <ul class="cell-features">
+                    <li>Multi-lobed nucleus (3-5 lobes)</li>
+                    <li>Fine, pink granules</li>
+                    <li>Diameter: 10-15 micrometers</li>
+                    <li>Role: First responder to bacteria</li>
+                    <li>Lifespan: 6-8 hours in circulation</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const cellTypeSelector = document.getElementById('cellTypeSelector');
+        const learnBtn = document.getElementById('learnBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        let selectedFile = null;
+        let selectedCellType = null;
+
+        // Upload area click handler
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File input change handler
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // Cell type selection
+        document.querySelectorAll('.cell-type-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.cell-type-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedCellType = card.dataset.type;
+            });
+        });
+
+        // Learn button handler
+        learnBtn.addEventListener('click', () => {
+            // Always provide learning content, with or without selection
+            const selectedType = selectedCellType || 'all';
+            localStorage.setItem('selectedCellType', selectedType);
+            localStorage.setItem('originalImage', previewImage.src);
+            localStorage.setItem('mode', 'learn');
+            
+            showSuccess('Loading comprehensive learning content...');
+            setTimeout(() => {
+                window.location.href = 'result.html';
+            }, 1000);
+        });
+
+        // Reset button handler
+        resetBtn.addEventListener('click', resetUpload);
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Please select a valid image file');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                showError('File size must be less than 10MB');
+                return;
+            }
+
+            selectedFile = file;
+            hideMessages();
+
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewContainer.style.display = 'block';
+                cellTypeSelector.style.display = 'block';
+                uploadArea.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetUpload() {
+            selectedFile = null;
+            selectedCellType = null;
+            previewContainer.style.display = 'none';
+            cellTypeSelector.style.display = 'none';
+            uploadArea.style.display = 'block';
+            fileInput.value = '';
+            hideMessages();
+            document.querySelectorAll('.cell-type-card').forEach(c => c.classList.remove('selected'));
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+
+        function hideMessages() {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
+
+        // Mode switching functionality
+        const learnModeBtn = document.getElementById('learnMode');
+        const identifyModeBtn = document.getElementById('identifyMode');
+        const learnSection = document.getElementById('learnSection');
+
+        // Add identify section HTML after learnSection
+        const identifySection = document.createElement('div');
+        identifySection.id = 'identifySection';
+        identifySection.style.display = 'none';
+        identifySection.innerHTML = `
+            <div class="upload-section">
+                <h2 style="margin-bottom: 30px; color: #333;">Test Your Blood Cell Identification Skills</h2>
+                
+                <div class="upload-area" id="identifyUploadArea">
+                    <div class="upload-icon">🔍</div>
+                    <div class="upload-text">Upload a blood cell image to identify</div>
+                    <div class="upload-subtext">We'll test your knowledge and provide feedback</div>
+                    <input type="file" id="identifyFileInput" class="file-input" accept="image/*">
+                </div>
+
+                <div class="error-message" id="identifyErrorMessage"></div>
+                <div class="success-message" id="identifySuccessMessage"></div>
+
+                <div class="preview-container" id="identifyPreviewContainer">
+                    <img id="identifyPreviewImage" class="preview-image" alt="Preview">
+                    <div class="cell-type-selector" id="identifyTypeSelector">
+                        <h3>What type of blood cell is this?</h3>
+                        <div class="cell-types">
+                            <div class="cell-type-card" data-type="eosinophil">
+                                <div class="cell-type-name">🔴 Eosinophil</div>
+                                <div class="cell-type-desc">Bright red granules, bilobed nucleus</div>
+                            </div>
+                            <div class="cell-type-card" data-type="lymphocyte">
+                                <div class="cell-type-name">🔵 Lymphocyte</div>
+                                <div class="cell-type-desc">Large nucleus, thin cytoplasm rim</div>
+                            </div>
+                            <div class="cell-type-card" data-type="monocyte">
+                                <div class="cell-type-name">🟢 Monocyte</div>
+                                <div class="cell-type-desc">Kidney-shaped nucleus, abundant cytoplasm</div>
+                            </div>
+                            <div class="cell-type-card" data-type="neutrophil">
+                                <div class="cell-type-name">🟣 Neutrophil</div>
+                                <div class="cell-type-desc">Multi-lobed nucleus, pink granules</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn" id="identifySubmitBtn" disabled>🎯 Submit Answer</button>
+                        <button class="btn btn-secondary" id="identifyResetBtn">🔄 Reset</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        learnSection.parentNode.insertBefore(identifySection, learnSection.nextSibling);
+
+        // Mode switching event listeners
+        learnModeBtn.addEventListener('click', () => {
+            learnModeBtn.classList.add('active');
+            identifyModeBtn.classList.remove('active');
+            learnSection.style.display = 'block';
+            identifySection.style.display = 'none';
+            resetBothModes();
+        });
+
+        identifyModeBtn.addEventListener('click', () => {
+            identifyModeBtn.classList.add('active');
+            learnModeBtn.classList.remove('active');
+            learnSection.style.display = 'none';
+            identifySection.style.display = 'block';
+            resetBothModes();
+        });
+
+        // Identify mode functionality
+        const identifyUploadArea = document.getElementById('identifyUploadArea');
+        const identifyFileInput = document.getElementById('identifyFileInput');
+        const identifyPreviewContainer = document.getElementById('identifyPreviewContainer');
+        const identifyPreviewImage = document.getElementById('identifyPreviewImage');
+        const identifyTypeSelector = document.getElementById('identifyTypeSelector');
+        const identifySubmitBtn = document.getElementById('identifySubmitBtn');
+        const identifyResetBtn = document.getElementById('identifyResetBtn');
+        const identifyErrorMessage = document.getElementById('identifyErrorMessage');
+        const identifySuccessMessage = document.getElementById('identifySuccessMessage');
+
+        let identifySelectedFile = null;
+        let identifySelectedType = null;
+
+        // Identify mode upload handlers
+        identifyUploadArea.addEventListener('click', () => {
+            identifyFileInput.click();
+        });
+
+        identifyFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleIdentifyFile(file);
+            }
+        });
+
+        identifyUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            identifyUploadArea.classList.add('dragover');
+        });
+
+        identifyUploadArea.addEventListener('dragleave', () => {
+            identifyUploadArea.classList.remove('dragover');
+        });
+
+        identifyUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            identifyUploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleIdentifyFile(files[0]);
+            }
+        });
+
+        // Identify mode cell type selection
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.cell-type-card') && identifySection.style.display !== 'none') {
+                const card = e.target.closest('.cell-type-card');
+                document.querySelectorAll('#identifyTypeSelector .cell-type-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                identifySelectedType = card.dataset.type;
+                identifySubmitBtn.disabled = false;
+            }
+        });
+
+        identifySubmitBtn.addEventListener('click', () => {
+            if (identifySelectedType && identifySelectedFile) {
+                // Generate a "correct" answer for demonstration
+                const correctAnswers = ['monocyte', 'neutrophil', 'lymphocyte', 'eosinophil'];
+                const correctAnswer = correctAnswers[Math.floor(Math.random() * correctAnswers.length)];
+                
+                localStorage.setItem('userAnswer', identifySelectedType);
+                localStorage.setItem('correctAnswer', correctAnswer);
+                localStorage.setItem('originalImage', identifyPreviewImage.src);
+                localStorage.setItem('mode', 'identify');
+                window.location.href = 'result.html';
+            }
+        });
+
+        identifyResetBtn.addEventListener('click', () => {
+            resetIdentifyMode();
+        });
+
+        function handleIdentifyFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showIdentifyError('Please select a valid image file');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                showIdentifyError('File size must be less than 10MB');
+                return;
+            }
+
+            identifySelectedFile = file;
+            hideIdentifyMessages();
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                identifyPreviewImage.src = e.target.result;
+                identifyPreviewContainer.style.display = 'block';
+                identifyTypeSelector.style.display = 'block';
+                identifyUploadArea.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetIdentifyMode() {
+            identifySelectedFile = null;
+            identifySelectedType = null;
+            identifyPreviewContainer.style.display = 'none';
+            identifyTypeSelector.style.display = 'none';
+            identifyUploadArea.style.display = 'block';
+            identifyFileInput.value = '';
+            identifySubmitBtn.disabled = true;
+            hideIdentifyMessages();
+            document.querySelectorAll('#identifyTypeSelector .cell-type-card').forEach(c => c.classList.remove('selected'));
+        }
+
+        function showIdentifyError(message) {
+            identifyErrorMessage.textContent = message;
+            identifyErrorMessage.style.display = 'block';
+            identifySuccessMessage.style.display = 'none';
+        }
+
+        function hideIdentifyMessages() {
+            identifyErrorMessage.style.display = 'none';
+            identifySuccessMessage.style.display = 'none';
+        }
+
+        function resetBothModes() {
+            resetUpload();
+            resetIdentifyMode();
+        }
+    </script>
+</body>
+</html>
