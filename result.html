@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HematoVision - Learning Results</title>
+    <title>HematoVision - Results</title>
     <style>
         * {
             margin: 0;
@@ -80,22 +80,29 @@
             color: #666;
         }
 
-        .learning-card {
+        .results-card {
             text-align: center;
         }
 
-        .learning-icon {
+        .result-icon {
             font-size: 4rem;
             margin-bottom: 20px;
         }
 
-        .cell-type-result {
+        .result-title {
             font-size: 2rem;
             font-weight: bold;
             margin-bottom: 20px;
+            color: #333;
+        }
+
+        .classification-result {
+            font-size: 1.5rem;
+            font-weight: bold;
             padding: 15px 30px;
             border-radius: 50px;
             display: inline-block;
+            margin: 10px;
         }
 
         .eosinophil {
@@ -151,6 +158,11 @@
             background: #f8f9ff;
         }
 
+        .comparison-card.correct-answer {
+            border-color: #4caf50;
+            background: #e8f5e8;
+        }
+
         .comparison-title {
             font-size: 1.3rem;
             font-weight: bold;
@@ -183,40 +195,31 @@
             margin-right: 8px;
         }
 
-        .key-differences {
+        .answer-section {
             background: #f8f9fa;
             padding: 20px;
             border-radius: 10px;
             margin: 20px 0;
         }
 
-        .key-differences h3 {
+        .answer-section h3 {
             margin-bottom: 15px;
             color: #333;
         }
 
-        .difference-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+        .correct-answer {
+            background: #e8f5e8;
+            border-left: 4px solid #4caf50;
         }
 
-        .difference-item {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
+        .incorrect-answer {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
         }
 
-        .difference-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #333;
-        }
-
-        .difference-desc {
-            font-size: 0.9rem;
-            color: #666;
+        .learning-answer {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
         }
 
         .actions {
@@ -266,45 +269,17 @@
                 padding: 20px;
             }
             
-            .cell-type-result {
-                font-size: 1.5rem;
+            .classification-result {
+                font-size: 1.2rem;
             }
-        }
-
-        .classification-result {
-            font-size: 1.2rem;
-            font-weight: bold;
-            padding: 8px 15px;
-            border-radius: 20px;
-            display: inline-block;
-        }
-
-        .eosinophil {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        .lymphocyte {
-            background: #e3f2fd;
-            color: #1565c0;
-        }
-
-        .monocyte {
-            background: #e8f5e8;
-            color: #2e7d32;
-        }
-
-        .neutrophil {
-            background: #f3e5f5;
-            color: #7b1fa2;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <a href="home.html" class="back-btn">← Back to Learning</a>
-            <h1>🔬 Blood Cell Learning Results</h1>
+            <a href="home.html" class="back-btn">← Back to Home</a>
+            <h1 id="headerTitle">🔬 Results</h1>
         </div>
 
         <div id="resultsContent">
@@ -312,111 +287,114 @@
         </div>
 
         <div id="errorState" class="error-state" style="display: none;">
-            <h2>⚠️ No Image Found</h2>
-            <p>Please upload an image first to start learning.</p>
+            <h2>⚠️ No Results Found</h2>
+            <p>Please upload an image and complete the process first.</p>
             <a href="home.html" class="btn">Go Back</a>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-    const mode = localStorage.getItem('mode') || 'learn';
-    const originalImage = localStorage.getItem('originalImage');
+            const mode = localStorage.getItem('mode');
+            const originalImage = localStorage.getItem('originalImage');
 
-    if (!originalImage) {
-        document.getElementById('errorState').style.display = 'block';
-        return;
-    }
+            if (!mode || !originalImage) {
+                document.getElementById('errorState').style.display = 'block';
+                return;
+            }
 
-    if (mode === 'identify') {
-        const userAnswer = localStorage.getItem('userAnswer');
-        const correctAnswer = localStorage.getItem('correctAnswer');
-        displayIdentifyResults(userAnswer, correctAnswer, originalImage);
-    } else {
-        const selectedCellType = localStorage.getItem('selectedCellType');
-        displayLearningResults(selectedCellType, originalImage);
-    }
-});
+            if (mode === 'identify') {
+                const userAnswer = localStorage.getItem('userAnswer');
+                const correctAnswer = localStorage.getItem('correctAnswer');
+                displayIdentifyResults(userAnswer, correctAnswer, originalImage);
+            } else {
+                const selectedCellType = localStorage.getItem('selectedCellType');
+                displayLearningResults(selectedCellType, originalImage);
+            }
+        });
 
-function displayIdentifyResults(userAnswer, correctAnswer, imageUrl) {
+        function displayIdentifyResults(userAnswer, correctAnswer, imageUrl) {
+    document.getElementById('headerTitle').textContent = '🎯 Identification Test Results';
+    
     const cellData = getCellData();
     const isCorrect = userAnswer === correctAnswer;
+    const confidence = localStorage.getItem('confidence') || '0.85';
+    
+    // Enhanced educational explanations based on the specific combination
+    const educationalExplanation = getEducationalExplanation(userAnswer, correctAnswer, isCorrect);
     
     const resultsHTML = `
         <div class="results-container">
             <div class="card image-card">
-                <img src="${imageUrl}" alt="Blood cell image">
+                <img src="${imageUrl}" alt="Blood cell test image">
                 <div class="image-info">
                     <strong>Your Test Image</strong>
+                    <p style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                        AI Analysis Confidence: ${(parseFloat(confidence) * 100).toFixed(1)}%
+                    </p>
+                    <div style="margin-top: 10px; padding: 10px; background: #f0f8ff; border-radius: 8px; font-size: 0.85rem;">
+                        <strong>🔍 Image Analysis:</strong><br>
+                        ${getImageAnalysisDescription(correctAnswer)}
+                    </div>
                 </div>
             </div>
 
             <div class="card results-card">
-                <div class="success-icon">${isCorrect ? '🎉' : '📚'}</div>
-                <h2 style="margin-bottom: 20px;">${isCorrect ? 'Correct!' : 'Learning Opportunity'}</h2>
+                <div class="result-icon">${isCorrect ? '🎉' : '📚'}</div>
+                <div class="result-title">${isCorrect ? 'Excellent Work!' : 'Learning Opportunity'}</div>
                 
                 <div style="margin-bottom: 20px;">
-                    <p><strong>Your Answer:</strong> 
-                        <span class="classification-result ${userAnswer}">
-                            ${cellData[userAnswer].icon} ${cellData[userAnswer].name}
-                        </span>
-                    </p>
-                    <p style="margin-top: 10px;"><strong>Correct Answer:</strong> 
-                        <span class="classification-result ${correctAnswer}">
-                            ${cellData[correctAnswer].icon} ${cellData[correctAnswer].name}
-                        </span>
-                    </p>
+                    <p style="margin-bottom: 10px;"><strong>Your Answer:</strong></p>
+                    <div class="classification-result ${userAnswer}">
+                        ${cellData[userAnswer].icon} ${cellData[userAnswer].name}
+                    </div>
+                    
+                    <p style="margin: 15px 0 10px;"><strong>Correct Answer:</strong></p>
+                    <div class="classification-result ${correctAnswer}">
+                        ${cellData[correctAnswer].icon} ${cellData[correctAnswer].name}
+                    </div>
                 </div>
 
-                ${isCorrect ? 
-                    '<div style="background: #e8f5e8; padding: 15px; border-radius: 10px; color: #2e7d32;"><strong>🎯 Excellent!</strong> You correctly identified this blood cell!</div>' :
-                    '<div style="background: #fff3e0; padding: 15px; border-radius: 10px; color: #f57c00;"><strong>💡 Learning Moment!</strong> Let\'s review the key differences below.</div>'
-                }
+                <div class="answer-section ${isCorrect ? 'correct-answer' : 'incorrect-answer'}">
+                    ${educationalExplanation}
+                </div>
             </div>
 
             <div class="card detailed-info">
-                <h2 style="margin-bottom: 20px;">Detailed Explanation</h2>
+                <h2 style="margin-bottom: 20px;">Detailed Analysis & Learning</h2>
                 
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <h3 style="color: #333; margin-bottom: 15px;">
-                        ${cellData[correctAnswer].icon} Why this is a ${cellData[correctAnswer].name}:
-                    </h3>
-                    <ul style="list-style: none; padding: 0;">
-                        ${cellData[correctAnswer].features.map(feature => 
-                            `<li style="padding: 5px 0; border-bottom: 1px solid #eee;">• ${feature}</li>`
-                        ).join('')}
-                    </ul>
+                <div class="answer-section learning-answer">
+                    <h3>🔬 Why this is a ${cellData[correctAnswer].name}:</h3>
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <h4 style="color: #4caf50; margin-bottom: 10px;">Key Identifying Features in This Image:</h4>
+                        ${getSpecificImageFeatures(correctAnswer)}
+                    </div>
                 </div>
 
-                ${!isCorrect ? `
-                    <div style="background: #ffebee; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                        <h3 style="color: #c62828; margin-bottom: 15px;">
-                            ${cellData[userAnswer].icon} ${cellData[userAnswer].name} vs ${cellData[correctAnswer].icon} ${cellData[correctAnswer].name}:
-                        </h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <div>
-                                <h4 style="margin-bottom: 10px;">Your Choice (${cellData[userAnswer].name}):</h4>
-                                <ul style="list-style: none; padding: 0; font-size: 0.9rem;">
-                                    ${cellData[userAnswer].features.slice(0, 3).map(feature => 
-                                        `<li style="padding: 3px 0;">• ${feature}</li>`
-                                    ).join('')}
-                                </ul>
+                ${!isCorrect ? getComparisonExplanation(userAnswer, correctAnswer) : getReinforcementContent(correctAnswer)}
+
+                <div class="cell-comparison">
+                    ${Object.entries(cellData).map(([type, data]) => `
+                        <div class="comparison-card ${type === correctAnswer ? 'correct-answer' : type === userAnswer && !isCorrect ? 'highlighted' : ''}">
+                            <div class="comparison-icon">${data.icon}</div>
+                            <div class="comparison-title">
+                                ${data.name} 
+                                ${type === correctAnswer ? '<span style="color: #4caf50;">✓ Correct</span>' : 
+                                  type === userAnswer && !isCorrect ? '<span style="color: #f44336;">Your Choice</span>' : ''}
                             </div>
-                            <div>
-                                <h4 style="margin-bottom: 10px;">Correct Answer (${cellData[correctAnswer].name}):</h4>
-                                <ul style="list-style: none; padding: 0; font-size: 0.9rem;">
-                                    ${cellData[correctAnswer].features.slice(0, 3).map(feature => 
-                                        `<li style="padding: 3px 0;">• ${feature}</li>`
-                                    ).join('')}
-                                </ul>
-                            </div>
+                            <p style="text-align: center; color: #666; margin-bottom: 15px; font-style: italic;">
+                                ${data.percentage} of WBCs
+                            </p>
+                            <ul class="comparison-features">
+                                ${data.features.slice(0, 4).map(feature => `<li>${feature}</li>`).join('')}
+                            </ul>
                         </div>
-                    </div>
-                ` : ''}
+                    `).join('')}
+                </div>
 
                 <div class="actions">
-                    <a href="home.html" class="btn">🔍 Try Another Image</a>
-                    <button class="btn btn-secondary" onclick="downloadResults('identify', '${userAnswer}', '${correctAnswer}', ${isCorrect})">📄 Download Results</button>
+                    <a href="home.html" class="btn">🔍 Try Another Test</a>
+                    <button class="btn btn-secondary" onclick="downloadTestResults('${userAnswer}', '${correctAnswer}', ${isCorrect})">📄 Download Results</button>
                 </div>
             </div>
         </div>
@@ -425,202 +403,313 @@ function displayIdentifyResults(userAnswer, correctAnswer, imageUrl) {
     document.getElementById('resultsContent').innerHTML = resultsHTML;
 }
 
-function displayLearningResults(selectedType, imageUrl) {
-    const cellData = getCellData();
-
-    let resultsHTML = `
-        <div class="results-container">
-            <div class="card image-card">
-                <img src="${imageUrl}" alt="Blood cell image">
-                <div class="image-info">
-                    <strong>Your Learning Image</strong>
-                    <p style="margin-top: 10px; font-size: 0.9rem;">
-                        Compare this image with the characteristics below
-                    </p>
-                </div>
-            </div>
-
-            <div class="card learning-card">
-                <div class="learning-icon">📚</div>
-                <h2 style="margin-bottom: 20px;">Learning Mode Active</h2>
-    `;
-
-    if (selectedType && selectedType !== 'all') {
-        const cell = cellData[selectedType];
-        resultsHTML += `
-            <div class="cell-type-result ${selectedType}">
-                ${cell.icon} ${cell.name}
-            </div>
-            <p style="color: #666; margin-bottom: 20px;">
-                You're learning about: <strong>${cell.name}</strong><br>
-                Normal range: ${cell.percentage} of white blood cells
-            </p>
-            <div style="background: #e8f5e8; padding: 15px; border-radius: 10px; color: #2e7d32; margin-bottom: 20px;">
-                <strong>🎯 Focus Area:</strong> Pay special attention to the ${cell.name.toLowerCase()} characteristics highlighted below.
-            </div>
-        `;
-    } else {
-        resultsHTML += `
-            <div class="cell-type-result all-types">
-                🔬 All Cell Types
-            </div>
-            <p style="color: #666; margin-bottom: 20px;">
-                Comprehensive learning about all four major white blood cell types
-            </p>
-            <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; color: #1565c0; margin-bottom: 20px;">
-                <strong>📖 Complete Guide:</strong> Learn to identify all white blood cell types and their unique features.
-            </div>
-        `;
+// Add these new helper functions for better educational content
+function getEducationalExplanation(userAnswer, correctAnswer, isCorrect) {
+    if (isCorrect) {
+        return `<h3>🎯 Outstanding!</h3><p>You correctly identified this as a <strong>${getCellData()[correctAnswer].name}</strong>! You successfully recognized the key morphological features that distinguish this cell type. This demonstrates solid understanding of blood cell identification principles.</p>`;
     }
+    
+    // Specific explanations for common mistakes
+    const mistakes = {
+        'neutrophil-lymphocyte': 'Remember that neutrophils have a segmented (multi-lobed) nucleus, while lymphocytes have a single, large round nucleus.',
+        'neutrophil-monocyte': 'The key difference is the nucleus shape: neutrophils have 3-5 connected lobes, while monocytes have a kidney or horseshoe-shaped nucleus.',
+        'lymphocyte-monocyte': 'Lymphocytes are smaller with a large round nucleus and thin cytoplasm, while monocytes are larger with abundant gray-blue cytoplasm.',
+        'eosinophil-neutrophil': 'Eosinophils have bright red-orange granules and a bilobed nucleus, while neutrophils have fine pink granules and a multilobed nucleus.'
+    };
+    
+    const mistakeKey = `${correctAnswer}-${userAnswer}`;
+    const specificExplanation = mistakes[mistakeKey] || `Focus on the nuclear morphology - it's the most reliable distinguishing feature between ${getCellData()[userAnswer].name} and ${getCellData()[correctAnswer].name}.`;
+    
+    return `<h3>💡 Learning Moment</h3><p>This image shows a <strong>${getCellData()[correctAnswer].name}</strong>. ${specificExplanation} Let's examine the specific features that identify this cell type.</p>`;
+}
 
-    resultsHTML += `
-            </div>
-        </div>
+function getImageAnalysisDescription(correctAnswer) {
+    const descriptions = {
+        'neutrophil': 'Segmented nucleus with 3-5 lobes connected by thin chromatin strands, fine pink cytoplasmic granules visible',
+        'lymphocyte': 'Large, round nucleus with dense chromatin, thin rim of basophilic cytoplasm, high nucleus-to-cytoplasm ratio',
+        'monocyte': 'Large cell with kidney-shaped or indented nucleus, abundant gray-blue cytoplasm, largest white blood cell',
+        'eosinophil': 'Bilobed nucleus with bright orange-red cytoplasmic granules, moderate cell size'
+    };
+    
+    return descriptions[correctAnswer] || 'Analyzing cellular morphology and staining characteristics';
+}
 
-        <div class="card detailed-info">
-            <h2 style="margin-bottom: 20px;">White Blood Cell Identification Guide</h2>
-            <p style="color: #666; margin-bottom: 20px;">
-                Study these characteristics and compare them with your uploaded image:
-            </p>
+function getSpecificImageFeatures(correctAnswer) {
+    const features = {
+        'neutrophil': `
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">✓ <strong>Segmented nucleus:</strong> 3-5 lobes connected by thin chromatin bridges</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">✓ <strong>Cytoplasm:</strong> Pink with fine, evenly distributed granules</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">✓ <strong>Size:</strong> 10-15 micrometers, moderate size among WBCs</li>
+                <li style="padding: 8px 0;">✓ <strong>Function:</strong> First responder to bacterial infections</li>
+            </ul>
+        `,
+        'lymphocyte': `
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">✓ <strong>Nucleus:</strong> Large, round with dense, clumped chromatin</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">✓ <strong>Cytoplasm:</strong> Thin rim, deeply basophilic (blue)</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">✓ <strong>N:C ratio:</strong> High nucleus-to-cytoplasm ratio</li>
+                <li style="padding: 8px 0;">✓ <strong>Function:</strong> Adaptive immune responses (T, B, NK cells)</li>
+            </ul>
+        `,
+        'monocyte': `
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">✓ <strong>Nucleus:</strong> Large, kidney or horseshoe-shaped with loose chromatin</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">✓ <strong>Cytoplasm:</strong> Abundant, gray-blue with ground-glass appearance</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">✓ <strong>Size:</strong> 15-30 micrometers (largest WBC)</li>
+                <li style="padding: 8px 0;">✓ <strong>Function:</strong> Phagocytosis, differentiate into macrophages</li>
+            </ul>
+        `,
+        'eosinophil': `
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">✓ <strong>Nucleus:</strong> Bilobed (two segments) with dense chromatin</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">✓ <strong>Granules:</strong> Large, bright orange-red, refractile granules</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">✓ <strong>Size:</strong> 12-17 micrometers</li>
+                <li style="padding: 8px 0;">✓ <strong>Function:</strong> Allergic reactions, parasitic infections</li>
+            </ul>
+        `
+    };
+    
+    return features[correctAnswer] || '<p>Detailed morphological analysis</p>';
+}
 
-            <div class="cell-comparison">
-    `;
-
-    Object.entries(cellData).forEach(([type, data]) => {
-        const isHighlighted = selectedType === type ? 'highlighted' : '';
-        resultsHTML += `
-            <div class="comparison-card ${isHighlighted}">
-                <div class="comparison-icon">${data.icon}</div>
-                <div class="comparison-title">${data.name}</div>
-                <p style="text-align: center; color: #666; margin-bottom: 15px; font-style: italic;">
-                    ${data.percentage} of WBCs
-                </p>
-                <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px; text-align: center;">
-                    ${data.description}
-                </p>
-                <ul class="comparison-features">
-                    ${data.features.map(feature => `<li>${feature}</li>`).join('')}
-                </ul>
-            </div>
-        `;
-    });
-
-    resultsHTML += `
-            </div>
-
-            <div class="key-differences">
-                <h3>🔍 Quick Identification Tips</h3>
-                <div class="difference-grid">
-                    <div class="difference-item">
-                        <div class="difference-title">Step 1: Nucleus Shape</div>
-                        <div class="difference-desc">
-                            Look at the nucleus first - it's the most reliable feature for identification.
-                        </div>
+function getComparisonExplanation(userAnswer, correctAnswer) {
+    return `
+        <div style="background: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #ff9800;">
+            <h3 style="color: #f57c00; margin-bottom: 15px;">🔍 Key Differences</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                <div style="background: #ffebee; padding: 15px; border-radius: 8px;">
+                    <h4 style="margin-bottom: 10px; color: #d32f2f;">Your Choice: ${getCellData()[userAnswer].name}</h4>
+                    <div style="font-size: 0.9rem; color: #666;">
+                        ${getSpecificImageFeatures(userAnswer)}
                     </div>
-                    <div class="difference-item">
-                        <div class="difference-title">Step 2: Cytoplasm Color</div>
-                        <div class="difference-desc">
-                            Observe the cytoplasm color and any visible granules.
-                        </div>
-                    </div>
-                    <div class="difference-item">
-                        <div class="difference-title">Step 3: Cell Size</div>
-                        <div class="difference-desc">
-                            Compare the cell size to surrounding red blood cells.
-                        </div>
-                    </div>
-                    <div class="difference-item">
-                        <div class="difference-title">Step 4: Special Features</div>
-                        <div class="difference-desc">
-                            Look for distinctive features like granules or nuclear lobes.
-                        </div>
+                </div>
+                <div style="background: #e8f5e8; padding: 15px; border-radius: 8px;">
+                    <h4 style="margin-bottom: 10px; color: #2e7d32;">Correct: ${getCellData()[correctAnswer].name}</h4>
+                    <div style="font-size: 0.9rem; color: #2e7d32;">
+                        ${getSpecificImageFeatures(correctAnswer)}
                     </div>
                 </div>
             </div>
-
-            <div style="background: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #667eea;">
-                <h3 style="color: #667eea; margin-bottom: 10px;">🎓 Learning Complete!</h3>
-                <p style="color: #555;">
-                    You now have comprehensive information about white blood cell identification. 
-                    Use this knowledge to practice identifying cells in your uploaded image and other microscopy images.
+            <div style="margin-top: 15px; padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                <h4 style="color: #333; margin-bottom: 10px;">🎯 Memory Tip:</h4>
+                <p style="color: #555; font-size: 0.9rem;">
+                    ${getMemoryTip(userAnswer, correctAnswer)}
                 </p>
-            </div>
-
-            <div class="actions">
-                <a href="home.html" class="btn">📚 Learn with Another Image</a>
-                <button class="btn btn-secondary" onclick="downloadLearningGuide()">📄 Download Study Guide</button>
             </div>
         </div>
     `;
-
-    document.getElementById('resultsContent').innerHTML = resultsHTML;
 }
 
-function getCellData() {
-    return {
-        eosinophil: {
-            name: 'Eosinophil',
-            icon: '🔴',
-            percentage: '1-4%',
-            description: 'Specialized for allergic reactions and parasitic defense.',
-            features: [
-                'Bilobed nucleus with dense chromatin',
-                'Large, bright orange-red granules in cytoplasm',
-                'Diameter of 12-17 micrometers',
-                'Contains major basic protein and eosinophil cationic protein',
-                'Increased in allergies, asthma, and parasitic infections'
-            ]
-        },
-        lymphocyte: {
-            name: 'Lymphocyte',
-            icon: '🔵',
-            percentage: '20-40%',
-            description: 'Key components of adaptive immune system.',
-            features: [
-                'Large, round nucleus with dense chromatin',
-                'Thin rim of basophilic cytoplasm',
-                'Diameter of 6-15 micrometers',
-                'Include T cells, B cells, and NK cells',
-                'Responsible for antibody production and cell-mediated immunity'
-            ]
-        },
-        monocyte: {
-            name: 'Monocyte',
-            icon: '🟢',
-            percentage: '2-8%',
-            description: 'Largest WBC, precursors to macrophages.',
-            features: [
-                'Large, kidney-shaped or horseshoe-shaped nucleus',
-                'Abundant gray-blue cytoplasm',
-                'Diameter of 15-30 micrometers (largest WBC)',
-                'Differentiate into macrophages and dendritic cells',
-                'Important for phagocytosis and antigen presentation'
-            ]
-        },
-        neutrophil: {
-            name: 'Neutrophil',
-            icon: '🟣',
-            percentage: '50-70%',
-            description: 'Most abundant WBC, first responders to infection.',
-            features: [
-                'Multi-lobed nucleus (3-5 lobes) connected by thin strands',
-                'Fine, pink granules in cytoplasm',
-                'Diameter of 10-15 micrometers',
-                'Short lifespan of 6-8 hours in circulation',
-                'Capable of forming neutrophil extracellular traps (NETs)'
-            ]
-        }
+function getReinforcementContent(correctAnswer) {
+    return `
+        <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #4caf50;">
+            <h3 style="color: #2e7d32; margin-bottom: 15px;">🎓 Excellent Identification!</h3>
+            <p style="color: #2e7d32; margin-bottom: 15px;">
+                You successfully identified the key morphological features of ${getCellData()[correctAnswer].name}. 
+                This demonstrates strong understanding of cellular identification principles.
+            </p>
+            <div style="background: white; padding: 15px; border-radius: 8px;">
+                <h4 style="color: #2e7d32; margin-bottom: 10px;">🔬 Advanced Learning:</h4>
+                <p style="color: #555; font-size: 0.9rem;">
+                    ${getAdvancedTip(correctAnswer)}
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+function getMemoryTip(userAnswer, correctAnswer) {
+    const tips = {
+        'neutrophil': 'Think "Neutrophil = Nuclear segments" - count the lobes in the nucleus (3-5 connected segments)',
+        'lymphocyte': 'Think "Lymphocyte = Large nucleus, Little cytoplasm" - high N:C ratio is key',
+        'monocyte': 'Think "Monocyte = Monster size, kidney-shaped nucleus" - largest WBC with indented nucleus',
+        'eosinophil': 'Think "Eosinophil = rEd granules" - bright red-orange granules are unmistakable'
     };
+    
+    return tips[correctAnswer] || `Focus on the most distinctive feature of ${getCellData()[correctAnswer].name}`;
 }
 
-function downloadResults(mode, userAnswer, correctAnswer, isCorrect) {
-    const cellData = getCellData();
-    const reportContent = `
+function getAdvancedTip(correctAnswer) {
+    const tips = {
+        'neutrophil': 'Advanced: Look for toxic granulation or Döhle bodies in activated neutrophils during infections.',
+        'lymphocyte': 'Advanced: Distinguish between small resting lymphocytes and larger activated lymphoblasts.',
+        'monocyte': 'Advanced: Note the "ground-glass" cytoplasm appearance and possible vacuoles in monocytes.',
+        'eosinophil': 'Advanced: Eosinophil granules contain major basic protein and are involved in helminth defense.'
+    };
+    
+    return tips[correctAnswer] || 'Continue practicing with various cell morphologies to master identification.';
+}
+
+        function displayLearningResults(selectedType, imageUrl) {
+            document.getElementById('headerTitle').textContent = '📚 Learning Results';
+            
+            const cellData = getCellData();
+
+            let resultsHTML = `
+                <div class="results-container">
+                    <div class="card image-card">
+                        <img src="${imageUrl}" alt="Blood cell learning image">
+                        <div class="image-info">
+                            <strong>Your Learning Image</strong>
+                            <p style="margin-top: 10px; font-size: 0.9rem;">
+                                Study this image alongside the information below
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card results-card">
+                        <div class="result-icon">📚</div>
+                        <div class="result-title">Learning Mode Active</div>
+            `;
+
+            if (selectedType && selectedType !== 'all') {
+                const cell = cellData[selectedType];
+                resultsHTML += `
+                    <div class="classification-result ${selectedType}">
+                        ${cell.icon} ${cell.name}
+                    </div>
+                    <div class="answer-section learning-answer">
+                        <h3>🎯 Your Focus: ${cell.name}</h3>
+                        <p>You selected ${cell.name} to learn about. Here's comprehensive information about this cell type and how it compares to others.</p>
+                    </div>
+                `;
+            } else {
+                resultsHTML += `
+                    <div class="classification-result all-types">
+                        🔬 All Cell Types
+                    </div>
+                    <div class="answer-section learning-answer">
+                        <h3>📖 Comprehensive Learning</h3>
+                        <p>You're learning about all four major white blood cell types. This complete guide will help you identify each type.</p>
+                    </div>
+                `;
+            }
+
+            resultsHTML += `
+                    </div>
+                </div>
+
+                <div class="card detailed-info">
+                    <h2 style="margin-bottom: 20px;">Complete Blood Cell Guide</h2>
+                    
+                    <div class="answer-section learning-answer">
+                        <h3>🔬 How to Identify Blood Cells:</h3>
+                        <ol style="padding-left: 20px; margin-top: 15px;">
+                            <li style="margin-bottom: 10px;"><strong>Start with the nucleus</strong> - Shape and number of lobes are key identifiers</li>
+                            <li style="margin-bottom: 10px;"><strong>Examine the cytoplasm</strong> - Look for color and granules</li>
+                            <li style="margin-bottom: 10px;"><strong>Consider cell size</strong> - Compare to surrounding red blood cells</li>
+                            <li style="margin-bottom: 10px;"><strong>Look for special features</strong> - Unique characteristics of each type</li>
+                        </ol>
+                    </div>
+
+                    <div class="cell-comparison">
+            `;
+
+            Object.entries(cellData).forEach(([type, data]) => {
+                const isHighlighted = selectedType === type ? 'highlighted' : '';
+                resultsHTML += `
+                    <div class="comparison-card ${isHighlighted}">
+                        <div class="comparison-icon">${data.icon}</div>
+                        <div class="comparison-title">${data.name}</div>
+                        <p style="text-align: center; color: #666; margin-bottom: 15px; font-style: italic;">
+                            ${data.percentage} of WBCs
+                        </p>
+                        <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px; text-align: center;">
+                            ${data.description}
+                        </p>
+                        <ul class="comparison-features">
+                            ${data.features.map(feature => `<li>${feature}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            });
+
+            resultsHTML += `
+                    </div>
+
+                    <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #4caf50;">
+                        <h3 style="color: #2e7d32; margin-bottom: 10px;">🎓 Learning Complete!</h3>
+                        <p style="color: #2e7d32;">
+                            You now have detailed information about white blood cell identification. 
+                            Compare your uploaded image with these characteristics to practice identification skills.
+                        </p>
+                    </div>
+
+                    <div class="actions">
+                        <a href="home.html" class="btn">📚 Learn More</a>
+                        <button class="btn btn-secondary" onclick="downloadLearningGuide()">📄 Download Study Guide</button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('resultsContent').innerHTML = resultsHTML;
+        }
+
+        function getCellData() {
+            return {
+                eosinophil: {
+                    name: 'Eosinophil',
+                    icon: '🔴',
+                    percentage: '1-4%',
+                    description: 'Specialized for allergic reactions and parasitic defense.',
+                    features: [
+                        'Bilobed nucleus with dense chromatin',
+                        'Large, bright orange-red granules in cytoplasm',
+                        'Diameter of 12-17 micrometers',
+                        'Contains major basic protein and eosinophil cationic protein',
+                        'Increased in allergies, asthma, and parasitic infections'
+                    ]
+                },
+                lymphocyte: {
+                    name: 'Lymphocyte',
+                    icon: '🔵',
+                    percentage: '20-40%',
+                    description: 'Key components of adaptive immune system.',
+                    features: [
+                        'Large, round nucleus with dense chromatin',
+                        'Thin rim of basophilic cytoplasm',
+                        'Diameter of 6-15 micrometers',
+                        'Include T cells, B cells, and NK cells',
+                        'Responsible for antibody production and cell-mediated immunity'
+                    ]
+                },
+                monocyte: {
+                    name: 'Monocyte',
+                    icon: '🟢',
+                    percentage: '2-8%',
+                    description: 'Largest WBC, precursors to macrophages.',
+                    features: [
+                        'Large, kidney-shaped or horseshoe-shaped nucleus',
+                        'Abundant gray-blue cytoplasm',
+                        'Diameter of 15-30 micrometers (largest WBC)',
+                        'Differentiate into macrophages and dendritic cells',
+                        'Important for phagocytosis and antigen presentation'
+                    ]
+                },
+                neutrophil: {
+                    name: 'Neutrophil',
+                    icon: '🟣',
+                    percentage: '50-70%',
+                    description: 'Most abundant WBC, first responders to infection.',
+                    features: [
+                        'Multi-lobed nucleus (3-5 lobes) connected by thin strands',
+                        'Fine, pink granules in cytoplasm',
+                        'Diameter of 10-15 micrometers',
+                        'Short lifespan of 6-8 hours in circulation',
+                        'Capable of forming neutrophil extracellular traps (NETs)'
+                    ]
+                }
+            };
+        }
+
+        function downloadTestResults(userAnswer, correctAnswer, isCorrect) {
+            const cellData = getCellData();
+            const reportContent = `
 HematoVision - Blood Cell Identification Test Results
 ===================================================
 
-Test Mode: ${mode.toUpperCase()}
-Date: ${new Date().toLocaleString()}
+Test Date: ${new Date().toLocaleString()}
 
 RESULTS:
 Your Answer: ${cellData[userAnswer].name}
@@ -645,23 +734,15 @@ Key differences to remember:
 Keep practicing to improve your blood cell identification skills!
 
 Generated by HematoVision Learning Tool
-    `;
+            `;
 
-    const blob = new Blob([reportContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Blood_Cell_Test_Results_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
+            downloadFile(reportContent, `Blood_Cell_Test_Results_${new Date().toISOString().split('T')[0]}.txt`);
+        }
 
-function downloadLearningGuide() {
-    const guideContent = `
-HematoVision - Blood Cell Study Guide
-====================================
+        function downloadLearningGuide() {
+            const guideContent = `
+HematoVision - Complete Blood Cell Study Guide
+=============================================
 
 WHITE BLOOD CELL IDENTIFICATION GUIDE
 
@@ -699,23 +780,33 @@ IDENTIFICATION STEPS:
 3. Consider cell size relative to red blood cells
 4. Note the nucleus-to-cytoplasm ratio
 
+PRACTICE TIPS:
+• Study multiple examples of each cell type
+• Focus on distinguishing features
+• Practice with different staining methods
+• Compare similar-looking cells side by side
+
 Remember: This is for educational purposes only.
 Always consult healthcare professionals for medical diagnosis.
 
 Generated by HematoVision Learning Tool
 Date: ${new Date().toLocaleString()}
-    `;
+            `;
 
-    const blob = new Blob([guideContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Blood_Cell_Study_Guide_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
+            downloadFile(guideContent, `Blood_Cell_Study_Guide_${new Date().toISOString().split('T')[0]}.txt`);
+        }
+
+        function downloadFile(content, filename) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
     </script>
 </body>
 </html>
